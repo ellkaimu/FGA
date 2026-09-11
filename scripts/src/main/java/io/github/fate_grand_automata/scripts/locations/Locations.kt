@@ -144,9 +144,19 @@ class Locations @Inject constructor(
         true -> Location(-396, 1284).xFromRight()
     }
 
-    val tempServantEnhancementRegion = Region(176, 1080, 480, 104).xFromCenter()
+    val tempServantEnhancementRegion = Region(252, 1096, 301, 57).xFromCenter()
 
     val enhancementSkipRapidClick = Location(0, 1400).xFromCenter()
 
     val tempServantEnhancementLocation = Location(402, 1124).xFromCenter()
+
+    // Map navigation: "下一个" arrow at top-center of map when current location's battles are complete
+    // Arrow template matches at script ~1100-1460 X, ~40-280 Y (top of screen)
+    val mapNextArrowRegion = Region(-220, -720, 440, 320).xFromCenter()
+    val mapNextArrowClick = Location(0, -560).xFromCenter()
+
+    // No-battle quest badge: "无战斗" badge on right panel header
+    // Badge template matches at script ~2210-2380 X, ~184-264 Y (top-right)
+    val noBattleBadgeRegion = Region(-370, 164, 210, 120).xFromRight()
+    val noBattleModalCancelClick = Location(-340, 230).xFromCenter()
 }

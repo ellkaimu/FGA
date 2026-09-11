@@ -4,7 +4,6 @@ import io.github.fate_grand_automata.scripts.IFgoAutomataApi
 import io.github.fate_grand_automata.scripts.Images
 import io.github.fate_grand_automata.scripts.ScriptNotify
 import io.github.fate_grand_automata.scripts.enums.GameServer
-import io.github.fate_grand_automata.scripts.enums.GameServers
 import io.github.fate_grand_automata.scripts.enums.MaterialEnum
 import io.github.fate_grand_automata.scripts.models.BoostItem
 import io.github.fate_grand_automata.scripts.models.FieldSlot
@@ -75,7 +74,6 @@ class AutoBattle @Inject constructor(
         class CardPriorityParseError(val msg: String) : ExitReason()
         data object Paused : ExitReason()
         data object StopAfterThisRun : ExitReason()
-        data object OutOfCommandSpells: ExitReason()
     }
 
     internal class BattleExitException(val reason: ExitReason) : Exception(reason.cause)
@@ -184,17 +182,19 @@ class AutoBattle @Inject constructor(
                 battle.performBattle()
             },
             { isInMenu() } to { menu() },
+            { isMapNextArrow() } to { clickMapNextArrow() },
             { isStartingNp() } to { skipNp() },
             { isInBondScreen() } to { handleBondScreen() },
             { isInResult() } to { result() },
             { isInDropsScreen() } to { dropScreen() },
             { isInQuestRewardScreen() } to { questReward() },
+            { isNoBattleModal() } to { handleNoBattleModal() },
+            { needsToStorySkip() } to { skipStory() },
             { isInSupport() } to { support() },
             { isRepeatScreen() } to { repeatQuest() },
             { isInOrdealCallOutOfPodsScreen() } to { ordealCallOutOfPods() },
             { isInInterludeEndScreen() } to { locations.interludeCloseClick.click() },
             { withdraw.needsToWithdraw() } to { withdraw.withdraw() },
-            { needsToStorySkip() } to { skipStory() },
             { isFriendRequestScreen() } to { skipFriendRequestScreen() },
             { isBond10CEReward() } to { bond10CEReward() },
             { isCeRewardDetails() } to { ceRewardDetails() },
@@ -223,6 +223,37 @@ class AutoBattle @Inject constructor(
      *  Checks if in menu.png is on the screen, indicating that a quest can be chosen.
      */
     private fun isInMenu() = images[Images.Menu] in locations.menuScreenRegion
+
+    /**
+     * Checks if the "下一个" (next) arrow is visible on the map.
+     * This appears when all battles at the current location are complete and
+     * the right-side quest panel has disappeared, requiring navigation to the next location.
+     */
+    private fun isMapNextArrow() = images[Images.NextArrow] in locations.mapNextArrowRegion
+
+    /**
+     * Clicks the "下一个" arrow to navigate to the next map location.
+     */
+    private fun clickMapNextArrow() {
+        locations.mapNextArrowClick.click()
+        1.seconds.wait()
+    }
+
+    /**
+     * Checks if the no-battle confirmation modal is showing.
+     * The modal appears when clicking a quest that has no battle (story-only quest).
+     * Detection is based on the "无战斗" badge in the right panel header.
+     */
+    private fun isNoBattleModal() = images[Images.NoBattleBadge] in locations.noBattleBadgeRegion
+
+    /**
+     * Dismisses the no-battle modal by clicking cancel.
+     * This skips the no-battle quest and returns to the map.
+     */
+    private fun handleNoBattleModal() {
+        locations.noBattleModalCancelClick.click()
+        1.seconds.wait()
+    }
 
     /**
      * Resets the battle state, clicks on the quest and refills the AP if needed.
@@ -362,7 +393,7 @@ class AutoBattle @Inject constructor(
 
         // for TranslateFGO where the Repeat button is in English
         if (match == null && prefs.gameServer is GameServer.Jp) {
-            match = locations.continueRegion.find(images[Images.Repeat, GameServers.default])
+            match = locations.continueRegion.find(images[Images.Repeat, GameServer.default])
         }
         return match
     }
